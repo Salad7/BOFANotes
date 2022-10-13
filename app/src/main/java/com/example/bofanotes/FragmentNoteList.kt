@@ -2,22 +2,26 @@ package com.example.bofanotes
 
 import android.app.FragmentManagerNonConfig
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.bofanotes.databinding.FragmentNotelistBinding
 import kotlinx.coroutines.launch
+import java.util.*
 
 class FragmentNoteList : Fragment() {
     lateinit var binding : FragmentNotelistBinding
     lateinit var noteAdapter :NoteAdapter
     lateinit var viewModel :FragmentNoteListViewModel
+    var requestCode = 0;
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -33,8 +37,11 @@ class FragmentNoteList : Fragment() {
                 lvNoteslist.adapter = noteAdapter
                 fabAdd.setOnClickListener {
                     lifecycleScope.launch {
-                        viewModel.addNote()
-                        noteAdapter.notifyDataSetChanged()
+//                        viewModel.addNote()
+//                        noteAdapter.notifyDataSetChanged()
+                        var noteDialog =  NoteCreatorDialogFragment()
+                       noteDialog.setTargetFragment(this@FragmentNoteList,requestCode)
+                        noteDialog.show(requireFragmentManager(),"TAG")
                     }
                 }
             }
@@ -43,6 +50,21 @@ class FragmentNoteList : Fragment() {
 
 
         return binding.root
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if(requestCode == 0 ){
+            lifecycleScope.launch {
+                var note = Note(UUID.randomUUID(), 1110, data!!.getStringExtra("note")!!)
+                Toast.makeText(
+                    requireContext(),
+                    "Message recieved: " + note.message,
+                    Toast.LENGTH_LONG
+                ).show()
+                viewModel.addCustomNote(note)
+                noteAdapter.notifyDataSetChanged()
+            }
+            }
     }
 
     suspend fun updateRecyclerView(){

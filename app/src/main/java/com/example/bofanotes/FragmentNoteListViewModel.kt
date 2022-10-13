@@ -26,4 +26,9 @@ class FragmentNoteListViewModel : ViewModel() {
         notes.add(Note(UUID.randomUUID(),1000,"Test Message"))
         return notes.size
     }
+
+    suspend fun addCustomNote(n :Note) : Int{
+        notes.add(n)
+        return notes.size
+    }
 }

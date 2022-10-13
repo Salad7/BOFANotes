@@ -16,9 +16,9 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction().add(R.id.notes_frame,FragmentNoteList())
             .commit()
         binding.apply {
-            fabAdd.setOnClickListener {
-                Toast.makeText(this@MainActivity,"Boop",Toast.LENGTH_LONG).show()
-            }
+//            fabAdd.setOnClickListener {
+//                Toast.makeText(this@MainActivity,"Boop",Toast.LENGTH_LONG).show()
+//            }
         }
     }
 }

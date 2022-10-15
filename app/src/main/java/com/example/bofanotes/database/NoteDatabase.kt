@@ -5,5 +5,5 @@ import androidx.room.RoomDatabase
 
 @Database(entities = [NoteObj::class], version = 1)
 abstract class NoteDatabase : RoomDatabase() {
-    suspend fun getNotes() : 
+    abstract fun noteDao() : NoteDao
 }

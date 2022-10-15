@@ -4,6 +4,7 @@ import android.app.FragmentManagerNonConfig
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,6 +14,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.bofanotes.database.NoteObj
 import com.example.bofanotes.databinding.FragmentNotelistBinding
 import kotlinx.coroutines.launch
 import java.util.*
@@ -31,10 +33,6 @@ class FragmentNoteList : Fragment() {
             binding = FragmentNotelistBinding.inflate(inflater,container,false)
             viewModel = FragmentNoteListViewModel()
             binding.apply {
-                lvNoteslist.layoutManager = LinearLayoutManager(context)
-                viewModel.addNote()
-                noteAdapter = NoteAdapter(viewModel.getNotes(),requireContext())
-                lvNoteslist.adapter = noteAdapter
                 fabAdd.setOnClickListener {
                     lifecycleScope.launch {
 //                        viewModel.addNote()
@@ -42,7 +40,17 @@ class FragmentNoteList : Fragment() {
                         var noteDialog =  NoteCreatorDialogFragment()
                        noteDialog.setTargetFragment(this@FragmentNoteList,requestCode)
                         noteDialog.show(requireFragmentManager(),"TAG")
+                        Log.d("FragmentNoteList","Clicked FAB Button")
                     }
+                    Log.d("FragmentNoteList","Clicked FAB Button2")
+
+                }
+                lvNoteslist.layoutManager = LinearLayoutManager(context)
+//                viewModel.addNote()
+                viewModel.notes.collect {
+                    Log.d("FragmentNoteList","Note collector called")
+                    noteAdapter = NoteAdapter(it,requireContext(),viewModel)
+                    lvNoteslist.adapter = noteAdapter
                 }
             }
 
@@ -55,13 +63,13 @@ class FragmentNoteList : Fragment() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if(requestCode == 0 ){
             lifecycleScope.launch {
-                var note = Note(UUID.randomUUID(), 1110, data!!.getStringExtra("note")!!)
+                var note = NoteObj(UUID.randomUUID(), 1110, data!!.getStringExtra("note")!!)
                 Toast.makeText(
                     requireContext(),
                     "Message recieved: " + note.message,
                     Toast.LENGTH_LONG
                 ).show()
-                viewModel.addCustomNote(note)
+                viewModel.insertNode(note)
                 noteAdapter.notifyDataSetChanged()
             }
             }
@@ -77,20 +85,32 @@ class FragmentNoteList : Fragment() {
         init {
             noteMsg = itemView.findViewById(R.id.custom_note_tv)
             noteTS = itemView.findViewById(R.id.custom_ts_tv)
+
+        }
+        fun addOnClickListener(note :NoteObj, ctx: Context, viewModel :FragmentNoteListViewModel){
+            itemView.setOnLongClickListener {
+                    Toast.makeText(ctx,"Message to be deleted: "+note.message,Toast.LENGTH_LONG).show();
+                viewModel.deleteNote(note)
+                true
+            }
         }
     }
 
-    class NoteAdapter(notesList :List<Note>, ctx :Context) : RecyclerView.Adapter<NoteViewHolder>() {
+    class NoteAdapter(notesList :List<NoteObj>, ctx :Context, model :FragmentNoteListViewModel) : RecyclerView.Adapter<NoteViewHolder>() {
         var notes = notesList
         var cont = ctx
+        var viewModel = model
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NoteViewHolder {
             var view = LayoutInflater.from(cont).inflate(R.layout.custom_note,parent,false)
+
             return NoteViewHolder(view)
         }
+
 
         override fun onBindViewHolder(holder: NoteViewHolder, position: Int) {
             holder.noteTS.setText(notes.get(position).timestamp.toString())
             holder.noteMsg.setText(notes.get(position).message.toString())
+            holder.addOnClickListener(notes.get(position),cont, viewModel = viewModel)
         }
 
         override fun getItemCount(): Int {
